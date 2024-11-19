@@ -12,8 +12,11 @@ function isHTMLOrText(node) {
     return node instanceof HTMLElement || node instanceof Text
 }
 
-function getElementName(type) {
-    return isFunction(type) ? (type.displayName || type.name) : type
+function getElementName(node) {
+    if (node.constructor) {
+        return node.constructor.name;
+    }
+    return isFunction(node.type) ? (node.type.displayName || node.type.name) : node.type
 }
 
 function isFragmentInstance(element) {
@@ -180,7 +183,7 @@ export function buildNodeTree(element) {
         return tree
     }
 
-    tree.name = getElementName(element.type)
+    tree.name = getElementName(element)
     tree.props = removeChildrenFromProps(element.memoizedProps)
     tree.state = getElementState(element.memoizedState)
 
@@ -289,8 +292,10 @@ export function findSelectorInTree(selectors, tree, selectFirst = false, searchF
                     return matchSelector(selector, child.name)
                 } else if (child.name !== null && typeof child.name === 'object') {
                     return matchSelector(selector, child.name.displayName)
+                } else if (child.constructor && typeof child.constructor.name === 'string') {
+                    return matchSelector(selector, child.constructor.name)
                 }
-
+                
                 return false
             },
             selectFirst
